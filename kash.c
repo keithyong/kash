@@ -10,46 +10,84 @@
 #include <signal.h>
 #include <dirent.h>
 
-#define ARGS_SIZE   20
+//Maximum size of number of arguments. 
+//Example: "ls | grep input.txt <" has 3 arguments.
+#define ARGS_ARRAY_SIZE     20
 
-const char *DELIMS = " -|<>";
-char *line;
-size_t bufferSize = 1024;
-char *output;
-char *args[ARGS_SIZE];
+//How many commands this shell has
+#define COM_LENGTH          1
+char *com[COM_LENGTH] = {"exit"};
 
 int parse(char *inputLine, char *arguments[], const char *delimiters);
+int findCommand(char *input, char *listOfCommands[], int n);
+void noCommand(char *args[]);
+void runCommand(int command);
+
+const char *DELIMS = " |<>\n";
+char *line;
+size_t bufferSize = 1024;
+char *args[ARGS_ARRAY_SIZE];
 
 int main(){
-
     while(1){
-        printf("kash $ ");
+        printf("\nkash $ ");
         getline(&line, &bufferSize, stdin);
+
+        //Here count means how many arguments were passed
         int count = parse(line, args, DELIMS);
-        if (!strcmp(line, "exit\n")){
-            exit(1);
-        }
-        else if (!strcmp(line, "ls\n")){
-            execvp(args[0], args);
-            printf("ls called\n");
-        }
-        else if (!strcmp(line, "cp\n")){
-        }
-        else{
-            printf("Command not found\n");
-        }
+        int command = findCommand(args[0], com, COM_LENGTH);
+        runCommand(command);
+      
     }
 }
 
 int parse(char *inputLine, char *arguments[], const char *delimiters)
 {
     int count = 0;
+    printf("Parsed out: ");
     for (char *p = strtok(inputLine, delimiters); p != NULL; p = strtok(NULL, delimiters))
     {
         arguments[count] = p;
+        printf("[%s]", arguments[count]);
         count++;
     }
+    arguments[count]=NULL;
     return count;
 }
 
 
+int findCommand(char *input, char *listOfCommands[], int n){
+    for(int i = 0; i < n; i++){
+        if(strcmp(input, listOfCommands[i]) == 0){
+          return i;
+        }
+    }
+
+    //If no commands are found then return -1
+    return -1;
+}
+
+void runCommand(int command){
+    switch (command){
+            case -1:
+                noCommand(args);
+                break;
+            case 0:
+                exit(1);
+                break;
+        
+    }
+}
+
+void noCommand(char *args[])
+{
+    int pid=fork();
+    if (pid==0){
+        execvp(args[0],args);
+        printf("command not found");
+    }
+    else{
+        int status;
+        waitpid(pid,&status,WCONTINUED);
+    }
+}
