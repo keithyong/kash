@@ -18,6 +18,7 @@
 #define COM_LENGTH          1
 char *com[COM_LENGTH] = {"exit"};
 
+void preParse(char *inputLine);
 int parse(char *inputLine, char *arguments[], const char *delimiters);
 int findCommand(char *input, char *listOfCommands[], int n);
 void noCommand(char *args[]);
@@ -32,13 +33,29 @@ int main(){
     while(1){
         printf("\nkash $ ");
         getline(&line, &bufferSize, stdin);
-
-        //Here count means how many arguments were passed
+        preParse(line);
         int count = parse(line, args, DELIMS);
         int command = findCommand(args[0], com, COM_LENGTH);
-        runCommand(command);
-      
+        runCommand(command); 
     }
+}
+
+/*  preParse:
+ *  Looks for ">", "<", or "|" and takes appropriate action
+ */
+void preParse(char *inputLine){
+    char *after[3];
+    if (strstr(inputLine, ">") != NULL)
+        after[0] = strstr(inputLine, ">") + 1;
+
+    if (strstr(inputLine, "<") != NULL)
+        after[1] = strstr(inputLine, "<") + 1;
+
+    if (strstr(inputLine, "|") != NULL)
+        after[2] = strstr(inputLine, "|") + 1;
+
+    for(int i = 0; i < 3; i++)
+        printf("[%s]", after[i]);
 }
 
 int parse(char *inputLine, char *arguments[], const char *delimiters)
@@ -69,13 +86,12 @@ int findCommand(char *input, char *listOfCommands[], int n){
 
 void runCommand(int command){
     switch (command){
-            case -1:
-                noCommand(args);
-                break;
-            case 0:
-                exit(1);
-                break;
-        
+        case -1:
+            noCommand(args);
+            break;
+        case 0:
+            exit(1);
+            break;
     }
 }
 
