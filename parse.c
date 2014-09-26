@@ -3,11 +3,13 @@
 #define CHAR_LENGTH         100
 
 const char *DELIMS = " \n-|<>";
+char *p;
+int i;
  
 int parse(char *inputLine, char *arguments[], const char *delimiters)
 {
     int count = 0;
-    for (char *p = strtok(inputLine, delimiters); p != NULL; p = strtok(NULL, delimiters))
+    for (p = strtok(inputLine, delimiters); p != NULL; p = strtok(NULL, delimiters))
     {
         arguments[count] = p;
         count++;
@@ -24,7 +26,7 @@ int main()
 
     fgets(line, bufferSize, stdin);
     int count = parse(line, args, DELIMS); 
-    for (int i = 0; i <= count; i++){ 
+    for (i = 0; i <= count; i++){ 
         printf("[%s]", args[i]); 
     } 
 }
