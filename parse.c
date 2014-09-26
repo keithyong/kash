@@ -2,7 +2,7 @@
 #include <string.h>
 #define CHAR_LENGTH         100
 
-const char *DELIMS = " \n-|<>";
+const char *DELIMS = " ,.\n";
 char *p;
 int i;
  
