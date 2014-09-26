@@ -14,25 +14,34 @@
 //Example: "ls | grep input.txt <" has 3 arguments.
 #define ARGS_ARRAY_SIZE     20
 
-//How many commands this shell has
+//How many commands this shell has.
+//Only 1 for now unless more custom
+//commands are added.
 #define COM_LENGTH          1
 char *com[COM_LENGTH] = {"exit"};
 
+//Used to split up input around <>| delims
 void preParse(char *inputLine);
+
 int parse(char *inputLine, char *arguments[], const char *delimiters);
 int findCommand(char *input, char *listOfCommands[], int n);
 void noCommand(char *args[]);
 void runCommand(int command);
 
 const char *DELIMS = " |<>\n";
-char *line;
-size_t bufferSize = 1024;
+
+#define BUFFER              1024
+char line[BUFFER];
 char *args[ARGS_ARRAY_SIZE];
+
+//Some inits for the for loops.
+int i;
+char *p;
 
 int main(){
     while(1){
         printf("\nkash $ ");
-        getline(&line, &bufferSize, stdin);
+        fgets(line, BUFFER, stdin);
         preParse(line);
         int count = parse(line, args, DELIMS);
         int command = findCommand(args[0], com, COM_LENGTH);
@@ -45,16 +54,20 @@ int main(){
  */
 void preParse(char *inputLine){
     char *after[3];
-    if (strstr(inputLine, ">") != NULL)
+    if (strstr(inputLine, ">") != NULL){
         after[0] = strstr(inputLine, ">") + 1;
+        inputLine[*after] = NULL;
+    }
 
-    if (strstr(inputLine, "<") != NULL)
+    if (strstr(inputLine, "<") != NULL){
         after[1] = strstr(inputLine, "<") + 1;
+    }
 
-    if (strstr(inputLine, "|") != NULL)
+    if (strstr(inputLine, "|") != NULL){
         after[2] = strstr(inputLine, "|") + 1;
+    }
 
-    for(int i = 0; i < 3; i++)
+    for (i = 0; i < 3; i++)
         printf("[%s]", after[i]);
 }
 
@@ -62,7 +75,7 @@ int parse(char *inputLine, char *arguments[], const char *delimiters)
 {
     int count = 0;
     printf("Parsed out: ");
-    for (char *p = strtok(inputLine, delimiters); p != NULL; p = strtok(NULL, delimiters))
+    for (p = strtok(inputLine, delimiters); p != NULL; p = strtok(NULL, delimiters))
     {
         arguments[count] = p;
         printf("[%s]", arguments[count]);
@@ -74,7 +87,7 @@ int parse(char *inputLine, char *arguments[], const char *delimiters)
 
 
 int findCommand(char *input, char *listOfCommands[], int n){
-    for(int i = 0; i < n; i++){
+    for (i = 0; i < n; i++){
         if(strcmp(input, listOfCommands[i]) == 0){
           return i;
         }
@@ -97,13 +110,13 @@ void runCommand(int command){
 
 void noCommand(char *args[])
 {
-    int pid=fork();
-    if (pid==0){
+    int pid = fork();
+    if (pid == 0){
         execvp(args[0],args);
-        printf("command not found");
+        printf("Command not found");
     }
     else{
         int status;
-        waitpid(pid,&status,WCONTINUED);
+        waitpid(pid, &status, WCONTINUED);
     }
 }

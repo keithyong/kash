@@ -2,7 +2,7 @@
 #include <string.h>
 #define CHAR_LENGTH         100
 
-const char *DELIMS = " -|<>";
+const char *DELIMS = " \n-|<>";
  
 int parse(char *inputLine, char *arguments[], const char *delimiters)
 {
@@ -17,12 +17,12 @@ int parse(char *inputLine, char *arguments[], const char *delimiters)
 
 int main()
 {
-    char *line;
+    char line[1024];
     size_t bufferSize = 1024;
 
     char *args[CHAR_LENGTH];
 
-    getline(&line, &bufferSize, stdin);
+    fgets(line, bufferSize, stdin);
     int count = parse(line, args, DELIMS); 
     for (int i = 0; i <= count; i++){ 
         printf("[%s]", args[i]); 
