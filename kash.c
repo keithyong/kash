@@ -40,7 +40,7 @@ char *p;
 
 int main(){
     while(1){
-        printf("\nkash $ ");
+        printf("kash $ ");
         fgets(line, BUFFER, stdin);
         preParse(line);
         int count = parse(line, args, DELIMS);
@@ -56,7 +56,7 @@ void preParse(char *inputLine){
     char *after[3];
     if (strstr(inputLine, ">") != NULL){
         after[0] = strstr(inputLine, ">") + 1;
-        inputLine[*after] = NULL;
+        
     }
 
     if (strstr(inputLine, "<") != NULL){
@@ -66,9 +66,6 @@ void preParse(char *inputLine){
     if (strstr(inputLine, "|") != NULL){
         after[2] = strstr(inputLine, "|") + 1;
     }
-
-    for (i = 0; i < 3; i++)
-        printf("[%s]", after[i]);
 }
 
 int parse(char *inputLine, char *arguments[], const char *delimiters)
@@ -81,6 +78,7 @@ int parse(char *inputLine, char *arguments[], const char *delimiters)
         printf("[%s]", arguments[count]);
         count++;
     }
+    putchar('\n');
     arguments[count]=NULL;
     return count;
 }
@@ -113,7 +111,7 @@ void noCommand(char *args[])
     int pid = fork();
     if (pid == 0){
         execvp(args[0],args);
-        printf("Command not found");
+        printf("Command not found\n");
     }
     else{
         int status;
