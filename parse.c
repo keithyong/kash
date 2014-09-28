@@ -21,7 +21,7 @@ void operatorParse(char *inputLine, char ops[3])
 {
     int operatorCount = 0;
 
-    for (int i = 0; i < strlength(inputLine); i++){
+    for (i = 0; i < strlength(inputLine); i++){
         char c = inputLine[i];
         if ((operatorCount < MAX_OPS) && ((c == '|') || (c == '>') || (c == '<'))){
             ops[operatorCount] = c;
