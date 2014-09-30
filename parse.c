@@ -39,18 +39,9 @@ int parse(char *inputLine, char *arguments[], const char *delimiters)
         arguments[count] = p;
         count++;
     }
+    arguments[count]=NULL;
     return count;
 }
-
-void printString(char *s)
-{
-    int n;
-    for(n = 0; *s != '\0'; s++){
-        printf("[%c]", s[n]);
-        n++;
-    }
-    putchar('\n');
-}   
 
 int main()
 {
@@ -62,6 +53,12 @@ int main()
     fgets(line, bufferSize, stdin);
     operatorParse(line, operators);
     int count = parse(line, args, DELIMS); 
-    printString(line);
-    printString(operators);
+    //printf("%s", line);
+    int j=0;
+    while (args[j]!=NULL)
+	printf("%s ",args[j++]);
+    for(i = 0; i < MAX_OPS; i++)
+	printf("%c", operators[i]); 
+    putchar('\n');
+    printf("%s", line);
 }
