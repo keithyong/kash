@@ -53,12 +53,11 @@ int main()
     fgets(line, bufferSize, stdin);
     operatorParse(line, operators);
     int count = parse(line, args, DELIMS); 
-    //printf("%s", line);
-    int j=0;
+    int j = 0;
     while (args[j]!=NULL)
-	printf("%s ",args[j++]);
+	printf("[%s]",args[j++]);
     for(i = 0; i < MAX_OPS; i++)
-	printf("%c", operators[i]); 
+	printf("[%c]", operators[i]); 
     putchar('\n');
-    printf("%s", line);
+    printf("[%s]", line);
 }
