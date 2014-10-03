@@ -30,3 +30,15 @@
 
 # DS_STORE
 *.DS_STORE
+
+#Some files to ignore
+forkprac.c
+parse.c
+#Some files to ignore
+forkprac.c
+parse.c
+#Some files to ignore
+forkprac.c
+parse.c
+fileopen.c
+
