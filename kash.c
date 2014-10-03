@@ -17,6 +17,7 @@
 //How many commands this shell has.
 //Only 1 for now unless more custom
 //commands are added.
+
 #define COM_LENGTH          1
 char *com[COM_LENGTH] = {"exit"};
 
@@ -25,7 +26,7 @@ void preParse(char *inputLine);
 
 int parse(char *inputLine, char *arguments[], const char *delimiters);
 int findCommand(char *input, char *listOfCommands[], int n);
-void noCommand(char *args[]);
+void forkIt(char *args[]);
 void runCommand(int command);
 
 const char *DELIMS = " |<>\n";
@@ -45,6 +46,7 @@ int main(){
         preParse(line);
         int count = parse(line, args, DELIMS);
         int command = findCommand(args[0], com, COM_LENGTH);
+        printf("%d",command);
         runCommand(command); 
     }
 }
@@ -56,7 +58,6 @@ void preParse(char *inputLine){
     char *after[3];
     if (strstr(inputLine, ">") != NULL){
         after[0] = strstr(inputLine, ">") + 1;
-        
     }
 
     if (strstr(inputLine, "<") != NULL){
@@ -98,7 +99,7 @@ int findCommand(char *input, char *listOfCommands[], int n){
 void runCommand(int command){
     switch (command){
         case -1:
-            noCommand(args);
+            forkIt(args);
             break;
         case 0:
             exit(1);
@@ -106,12 +107,14 @@ void runCommand(int command){
     }
 }
 
-void noCommand(char *args[])
+void forkIt(char *args[])
 {
     int pid = fork();
+    printf("pid of new fork: %d\n", pid);
     if (pid == 0){
         execvp(args[0],args);
         printf("Command not found\n");
+        exit(1);
     }
     else{
         int status;
