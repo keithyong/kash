@@ -13,18 +13,9 @@
 //Example: "ls | grep input.txt <" has 3 arguments.
 #define ARGS_ARRAY_SIZE     20
 
-//How many commands this shell has.
-//Only 1 for now unless more custom
-//commands are added.
-
-#define COM_LENGTH          1
-char *com[COM_LENGTH] = {"exit"};
-
-void findRedirects(char *input);
+int findRedirects(char *input);
 int parse(char *inputLine, char *arguments[], const char *delimiters);
-int findCommand(char *input, char *listOfCommands[], int n);
 void forkIt(char *args[]);
-void runCommand(int command);
 void execToFile(char *args[], char *fileName);
 
 const char *DELIMS = " |<>\n";
@@ -37,37 +28,66 @@ char *args[ARGS_ARRAY_SIZE];
 int i;
 char *p;
 
+struct redirCode {
+    /* For code:
+     * 0 = none
+     * 1 = stdin
+     * 2 = stdout
+     */
+    int code;
+    char *argsWithoutFile;
+    char *fileName;
+}
+
 int main(){
     while(1){
         printf("kash $ ");
         fgets(line, BUFFER, stdin);
-        int redirectStatus = findRedirects(line);
-        int count = parse(line, args, DELIMS);
-        int command = findCommand(args[0], com, COM_LENGTH);
-        printf("%d",command);
-        runCommand(command); 
+
+        if (strcmp(line, "exit"))
+            exit(1);
+        else {
+            int redirectStatus = findRedirects(line);
+            int count = parse(line, args, DELIMS);
+            forkIt(args);
+        }
     }
 }
 
-/* Looks for '>', '<'. Then it replaces it with a space.
- * Returns:
- * 1 if >
- * 2 if <
- * 0 if no redirects
+/* Looks for '>', '<' in a string.
+ * Will destroy string *input
+ * Returns a redirCode struct with:
+ * 1. fileName - the name of file that
+ * wants to be redirected/stdin
+ * 2. code - the direction of redirect
+ * 3. args - the arguments w/o filename
  * */
-void findRedirects(char *input)
+struct redirCode findRedirects(char *input)
 {
+    const char *delims = "<>";
+    char *inputCopy = input;
+    struct *redirToReturn = malloc(sizeof(struct redirCode));
+    redirToReturn.argsWithoutFile[strlen(input)];
+    char *temp[];
+
+    //Do an initial search for the delimeters
+    //before strtok destroys it. O(n) time.
     for (i = 0; i < strlen(input); i++){
-        if (input[i] == '>'){
-            input[i] = ' ';
-            return 1;
+    	int redirectOperatorReached = 0;
+    	int count = 0;
+
+        if (input[i] == '<'){
+            redirToReturn.code = 1;
+            redirectOperatorReached = 1;
         }
-        else if (input[i] == '<'){
-            input[i] = ' ';
-            return 2;
+        else if (input[i] == '>'){
+            redirToReturn.code = 2;
+            redirectOperatorReached = 1;
         }
-        else
-            return 0;
+        if (redirectOperatorReached == 0){
+        	redirToReturn.argsWithoutFile[count] = 
+        	count++;
+        }
     }
 }
 
@@ -84,29 +104,6 @@ int parse(char *inputLine, char *arguments[], const char *delimiters)
     putchar('\n');
     arguments[count]=NULL;
     return count;
-}
-
-
-int findCommand(char *input, char *listOfCommands[], int n){
-    for (i = 0; i < n; i++){
-        if(strcmp(input, listOfCommands[i]) == 0){
-          return i;
-        }
-    }
-
-    //If no commands are found then return -1
-    return -1;
-}
-
-void runCommand(int command){
-    switch (command){
-        case -1:
-            forkIt(args);
-            break;
-        case 0:
-            exit(1);
-            break;
-    }
 }
 
 void forkIt(char *args[])
