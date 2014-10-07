@@ -1,0 +1,18 @@
+fd[]        //File descriptor
+
+pipe(&fd);  
+pd = fork()
+
+if(pid == 0)
+{
+    
+
+   
+} else {
+    pid2 = fork()
+    if(pid == 0){
+        exec
+    }
+}
+
+store the pid of the last suspended process somewhere, so if you see the resume command 

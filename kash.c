@@ -8,15 +8,17 @@
 #include <errno.h> 
 #include <signal.h>
 #include <dirent.h>
+#include <ctype.h>
 
 //Maximum size of number of arguments. 
 //Example: "ls | grep input.txt <" has 3 arguments.
 #define ARGS_ARRAY_SIZE     20
 
-int findRedirects(char *input);
+struct redirCode findRedirects(char *input);
 int parse(char *inputLine, char *arguments[], const char *delimiters);
 void forkIt(char *args[]);
 void execToFile(char *args[], char *fileName);
+char * removeSpaces(char * source, char * target);
 
 const char *DELIMS = " |<>\n";
 
@@ -37,22 +39,7 @@ struct redirCode {
     int code;
     char *argsWithoutFile;
     char *fileName;
-}
-
-int main(){
-    while(1){
-        printf("kash $ ");
-        fgets(line, BUFFER, stdin);
-
-        if (strcmp(line, "exit"))
-            exit(1);
-        else {
-            int redirectStatus = findRedirects(line);
-            int count = parse(line, args, DELIMS);
-            forkIt(args);
-        }
-    }
-}
+};
 
 /* Looks for '>', '<' in a string.
  * Will destroy string *input
@@ -65,30 +52,41 @@ int main(){
 struct redirCode findRedirects(char *input)
 {
     const char *delims = "<>";
-    char *inputCopy = input;
-    struct *redirToReturn = malloc(sizeof(struct redirCode));
-    redirToReturn.argsWithoutFile[strlen(input)];
-    char *temp[];
+    struct redirCode *redirToReturn = malloc(sizeof(struct redirCode));
 
     //Do an initial search for the delimeters
     //before strtok destroys it. O(n) time.
-    for (i = 0; i < strlen(input); i++){
-    	int redirectOperatorReached = 0;
-    	int count = 0;
+    int redirectOperatorReached = 0;
+    int count = 0;
 
+    int i;
+    for (i = 0; input[i] != 0; i++){
         if (input[i] == '<'){
-            redirToReturn.code = 1;
+            redirToReturn->code = 1;
             redirectOperatorReached = 1;
+            input[i] = ' ';
         }
         else if (input[i] == '>'){
-            redirToReturn.code = 2;
+            redirToReturn->code = 2;
             redirectOperatorReached = 1;
+            input[i] = ' ';
         }
-        if (redirectOperatorReached == 0){
-        	redirToReturn.argsWithoutFile[count] = 
-        	count++;
+        if (redirectOperatorReached != 1){
+            count++;
         }
     }
+    int lengthOfInput = strlen(input);
+    int sizeOfMalloc = (lengthOfInput+1)*sizeof(char);
+    redirToReturn->argsWithoutFile = (char *) malloc(sizeOfMalloc);
+    redirToReturn->fileName = (char *) malloc(sizeOfMalloc);
+
+    strncpy(redirToReturn->argsWithoutFile, input, count);
+    redirToReturn->argsWithoutFile[count] = '\0';
+    strncpy(redirToReturn->fileName, input + count, lengthOfInput - count);
+    char *temp = redirToReturn->fileName;
+    removeSpaces(redirToReturn->fileName, temp);
+    redirToReturn->fileName = temp;
+    return *redirToReturn;
 }
 
 int parse(char *inputLine, char *arguments[], const char *delimiters)
@@ -105,6 +103,7 @@ int parse(char *inputLine, char *arguments[], const char *delimiters)
     arguments[count]=NULL;
     return count;
 }
+
 
 void forkIt(char *args[])
 {
@@ -131,4 +130,40 @@ void execToFile(char *args[], char *fileName){
     fflush(stdout); close(out);
     dup2(save_out, fileno(stdout));
     close(save_out);
+}
+
+//FROM: http://stackoverflow.com/questions/1726302/removing-spaces-from-a-string-in-c
+char * removeSpaces(char * source, char * target)
+{
+     while(*source++ && *target)
+     {
+        if (!isspace(*source)) 
+             *target++ = *source;
+     }
+     return target;
+}
+
+int main(){
+    while(1){
+        printf("kash $ ");
+        fgets(line, BUFFER, stdin);
+        if (strcmp(line, "exit") == 0){
+            exit(1);
+        } else {
+            struct redirCode tempRedir = findRedirects(line);
+            //If > detected
+            if (tempRedir.code == 2){
+                int count = parse(tempRedir.argsWithoutFile, args, DELIMS);
+                printf("argWoFile = %s\n", tempRedir.argsWithoutFile);
+                execToFile(args, tempRedir.fileName);
+            } 
+            //If < detected
+            else if (tempRedir.code == 1){
+                //TODO: Do stdin here
+            } else { 
+                int count = parse(line, args, DELIMS);
+                forkIt(args);
+            }
+        }
+    }
 }
