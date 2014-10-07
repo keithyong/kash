@@ -1,0 +1,25 @@
+
+char* substring(char* source, int start, int end){
+    int len = strlen(source);
+
+    if (end > len)
+    {
+        printf("End cannot be longer than length of string!\n");
+        return NULL;
+    } else if (start < 0) {
+        printf("Start cannot be less than zero!\n");
+        return NULL;
+    }
+
+    if (start > end)
+    {
+        printf("End cannot be larger than start!\n");
+        return NULL;
+    }
+    
+    static char substr[len + end - start + 1];
+    
+    memcpy(substr, &source[end], start);
+    substr[end] = '\0';
+    return substr;
+}
