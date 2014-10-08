@@ -120,4 +120,13 @@ SSTTAANNDDAARRDDSS
      1003.1-1988 (``POSIX.1'') specification.
 
 BSD                              June 4, 1993                              BSD
-kash $ 
+kash $ '
+CMakeLists.txt
+README.md
+TERM_PROGRAM=iTerm.app
+a.out
+hi.txt
+input.txt
+kash.c
+practice
+execToFile method reachedfile descripter out = 3

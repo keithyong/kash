@@ -121,21 +121,21 @@ void forkIt(char *args[])
 void execToFile(char *args[], char *fileName)
 {
     printf("execToFile method reached");
-    int out = open(fileName, O_RDWR|O_CREAT|O_APPEND, 0600);
-    printf("file descripter out = %d", out);
-    int save_out = dup(fileno(stdout));
-
-    if (-1 == dup2(out, fileno(stdout)))
-        perror("cannot redirect stdout");
-
     int pid = fork();
     if (pid == 0){
-        execvp(args[0], args);
-        exit(1);
+        int out = open(fileName, O_RDWR|O_CREAT|O_APPEND, 0600);
+        printf("file descripter out = %d", out);
+        int save_out = dup(fileno(stdout));
+
+        if (-1 == dup2(out, fileno(stdout)))
+            perror("cannot redirect stdout");
+
         fflush(stdout);
         close(out);
         dup2(save_out, fileno(stdout));
         close(save_out);
+        execvp(args[0], args);
+        exit(1);
     } else {
         int status;
         waitpid(pid, &status, WCONTINUED);
