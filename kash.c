@@ -120,20 +120,14 @@ void forkIt(char *args[])
 
 void execToFile(char *args[], char *fileName)
 {
-    printf("execToFile method reached");
+    // http://stackoverflow.com/questions/2605130/redirecting-exec-output-to-a-buffer-or-file
     int pid = fork();
     if (pid == 0){
-        int out = open(fileName, O_RDWR|O_CREAT|O_APPEND, 0600);
-        printf("file descripter out = %d", out);
-        int save_out = dup(fileno(stdout));
-
-        if (-1 == dup2(out, fileno(stdout)))
-            perror("cannot redirect stdout");
-
-        fflush(stdout);
-        close(out);
-        dup2(save_out, fileno(stdout));
-        close(save_out);
+        int fd = open(fileName, O_RDWR|O_CREAT, S_IRUSR | S_IWUSR);
+        if (-1 == dup2(fd, 1))
+            perror("cannot redirect stdout\n");
+        dup2(fd, 1);
+        close(fd);
         execvp(args[0], args);
         exit(1);
     } else {
@@ -155,6 +149,9 @@ void execFromFile(char *args[], char *fileName){
         }
         close(fd);
         execvp(args[0], args);
+    } else {
+        int status;
+        waitpid(pid, &status, WCONTINUED);
     }
 }
 
@@ -179,14 +176,11 @@ int main(){
         else if (strcmp(line, "resume\n") == 0){
             //TODO: Resume functionality
         } else {
-            printf("else clause reached\n");
             struct redirCode tempRedir = findRedirects(line);
             int count = parse(tempRedir.argsWithoutFile, args, DELIMS);
             if (tempRedir.code == 2){
-                printf("stdout clause reached\n");
                 //Redirect output to stdout
                 execToFile(args, tempRedir.fileName);
-                printf("execToFile finished");
             } 
             else if (tempRedir.code == 1){
                 //Redirect file to stdin
