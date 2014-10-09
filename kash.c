@@ -142,11 +142,7 @@ void execFromFile(char *args[], char *fileName){
     int pid = fork();
     if (pid == 0){
         int fd = open(fileName, O_RDONLY);
-
-        int read_size = 0;
-        while ((read_size = read(fd, buffer, BUF_SIZE)) != 0) {
-            write(STDIN_FILENO, buffer, read_size);
-        }
+        dup2(fd, 0);
         close(fd);
         execvp(args[0], args);
     } else {
