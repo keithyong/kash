@@ -14,18 +14,30 @@
 //Example: "ls | grep input.txt <" has 3 arguments.
 #define ARGS_ARRAY_SIZE     20
 
+// http://stackoverflow.com/a/4024086/4117152
+// This stack is used to keep track of PIDs 
+// in the heap for sigint and sigtstp handling
+int stack[50];
+int *pidstack;
+int stackCount;
+#define push(pidstack, n) (*((pidstack)++) = (n))
+#define pop(pidstack) (*--(pidstack))
+
 struct redirCode findRedirects(char *input);
 int parse(char *inputLine, char *arguments[], const char *delimiters);
-void forkIt(char *args[]);
-void execToFile(char *args[], char *fileName);
-void execFromFile(char *args[], char *fileName);
+void forkIt(char *args[], int background);
+void execToFile(char *args[], char *fileName, int background);
+void execFromFile(char *args[], char *fileName, int background);
 char * removeSpaces(char * source, char * target);
+int myFork();
 
 const char *DELIMS = " |<>\n";
 
 #define BUFFER              1024
 char line[BUFFER];
 char *args[ARGS_ARRAY_SIZE];
+
+int global_PID;
 
 //Some inits for the for loops.
 int i;
@@ -98,27 +110,34 @@ int parse(char *inputLine, char *arguments[], const char *delimiters)
         arguments[count] = p;
         count++;
     }
-    putchar('\n');
     arguments[count]=NULL;
     return count;
 }
 
 
-void forkIt(char *args[])
+void myExecvp(const char *p, char  *const argv[]){
+    execvp(args[0], args);
+    printf("Command not found\n");
+    pop(pidstack);
+    stackCount--;
+    exit(1);
+}
+
+void forkIt(char *args[], int background)
 {
-    int pid = fork();   //Pretty much spawns a new shell.
+    int pid = fork();
     if (pid == 0){
-        execvp(args[0], args);
-        printf("Command not found\n");
-        exit(1);        //Exits out of duplicate shell.
+        myExecvp(args[0], args);
     }
-    else{
+    if (background == 0){
         int status;
         waitpid(pid, &status, WCONTINUED);
+    } else {
+        printf("Process created in background, pid = %d", pid);
     }
 }
 
-void execToFile(char *args[], char *fileName)
+void execToFile(char *args[], char *fileName, int background)
 {
     // http://stackoverflow.com/questions/2605130/redirecting-exec-output-to-a-buffer-or-file
     int pid = fork();
@@ -128,15 +147,17 @@ void execToFile(char *args[], char *fileName)
             perror("cannot redirect stdout\n");
         dup2(fd, 1);
         close(fd);
-        execvp(args[0], args);
-        exit(1);
-    } else {
+        myExecvp(args[0], args);
+    }
+    if (background == 0){
         int status;
         waitpid(pid, &status, WCONTINUED);
+    } else {
+        printf("Process created in background, pid = %d", pid);
     }
 }
 
-void execFromFile(char *args[], char *fileName){
+void execFromFile(char *args[], char *fileName, int background){
     void *buffer;
     int BUF_SIZE = 1024;
     int pid = fork();
@@ -144,10 +165,13 @@ void execFromFile(char *args[], char *fileName){
         int fd = open(fileName, O_RDONLY);
         dup2(fd, 0);
         close(fd);
-        execvp(args[0], args);
-    } else {
+        myExecvp(args[0], args);
+    } 
+    if (background == 0){
         int status;
         waitpid(pid, &status, WCONTINUED);
+    } else {
+        printf("Process created in background, pid = %d", pid);
     }
 }
 
@@ -162,7 +186,30 @@ char * removeSpaces(char * source, char * target)
      return target;
 }
 
+void sigint_handler(int signo)
+{
+    printf("received SIGINT\n");
+}
+void sigtstp_handler(int signo)
+{
+    printf("received SIGTSTP\n");
+}
+
+int parseForBackground(char *line)
+{
+    char *temp;
+    char *tempArgs[ARGS_ARRAY_SIZE];
+    temp = line;
+    int count = parse(temp, tempArgs, DELIMS);
+    return (strcmp(tempArgs[count - 1], "&") == 0);
+}
+
 int main(){
+    pidstack = stack; //Init the global PID stack
+    int isBackgroundProcess = 0;
+    signal(SIGINT, sigint_handler);
+    signal(SIGTSTP, sigtstp_handler);
+    int background = 0;
     while(1){
         printf("kash $ ");
         fgets(line, BUFFER, stdin);
@@ -171,19 +218,24 @@ int main(){
         }
         else if (strcmp(line, "resume\n") == 0){
             //TODO: Resume functionality
-        } else {
+        }
+        else if (parseForBackground(line)){
+            printf("background job detected\n");
+            background = 1;
+        }
+        else {
             struct redirCode tempRedir = findRedirects(line);
             int count = parse(tempRedir.argsWithoutFile, args, DELIMS);
             if (tempRedir.code == 2){
                 //Redirect output to stdout
-                execToFile(args, tempRedir.fileName);
+                execToFile(args, tempRedir.fileName, background);
             } 
             else if (tempRedir.code == 1){
                 //Redirect file to stdin
-                execFromFile(args, tempRedir.fileName);
+                execFromFile(args, tempRedir.fileName, background);
             } else { 
                 int count = parse(line, args, DELIMS);
-                forkIt(args);
+                forkIt(args, background);
             }
         }
     }
